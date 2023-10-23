@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>test_auth</RootNamespace>
+    <PublishProfile>DefaultContainer</PublishProfile>
+    <ContainerRepository>mindmatrix/test-auth</ContainerRepository>
+    <ContainerImageTag>1.0.4</ContainerImageTag>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ContainerPort Include="4181" Type="tcp" />
+  </ItemGroup>
+</Project>

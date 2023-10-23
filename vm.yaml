@@ -1,0 +1,34 @@
+---
+- name: Create VMs on Proxmox
+  hosts: localhost
+  vars_files:
+    - cluster.yaml # Replace with the name of your YAML file containing the specs
+  tasks:
+    - name: Download the script
+      get_url:
+        force: yes
+        url: "https://raw.githubusercontent.com/MindMatrix/k3s-setup/main/create-vm.sh"
+        dest: "/tmp/create-vm.sh"
+        mode: "0777"
+      delegate_to: "{{ item }}"
+      loop: "{{ proxmox.ips }}"
+    - name: Round-robin create master VMs
+      become: yes
+      become_user: root
+      command: >
+        /tmp/create-vm.sh "k3s-master-{{ item.split('.')[-1] }}" "{{ item.split('.')[-1] }}" "{{ item }}/24" "{{ masters.specs.gateway }}"
+        "{{ masters.specs.ram }}" "{{ masters.specs.cpus }}" "{{ masters.specs.cores }}" "{{ masters.specs.hdd }}G" "{{ ansible_user }}"
+      loop: "{{ masters.ips }}"
+      loop_control:
+        index_var: idx
+      delegate_to: "{{ proxmox.ips[idx % proxmox.ips|length] }}"
+    - name: Round-robin create agents VMs
+      become: yes
+      become_user: root
+      command: >
+        /tmp/create-vm.sh "k3s-agent-{{ item.split('.')[-1] }}" "{{ item.split('.')[-1] }}" "{{ item }}/24" "{{ agents.specs.gateway }}"
+        "{{ agents.specs.ram }}" "{{ agents.specs.cpus }}" "{{ agents.specs.cores }}" "{{ agents.specs.hdd }}G" "{{ ansible_user }}"
+      loop: "{{ agents.ips }}"
+      loop_control:
+        index_var: idx
+      delegate_to: "{{ proxmox.ips[idx % proxmox.ips|length] }}"

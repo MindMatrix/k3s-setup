@@ -1,0 +1,18 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: chris.phillips@mindmatrix.net
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+      - selector: {}
+        dns01:
+          digitalocean:
+            tokenSecretRef:
+              name: digitalocean-token-secret
+              key: access-token

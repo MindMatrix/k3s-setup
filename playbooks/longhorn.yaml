@@ -1,0 +1,21 @@
+---
+- name: Install NFS and open-iscsi
+  hosts: node
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install the required packages
+      apt:
+        name:
+          - nfs-common
+          - open-iscsi
+        state: present
+
+    - name: Start and enable open-iscsi service
+      service:
+        name: open-iscsi
+        state: started
+        enabled: yes

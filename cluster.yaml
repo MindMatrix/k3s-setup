@@ -1,0 +1,38 @@
+k3s_version: v1.28.2+k3s1
+ansible_user: <GITHUB_USER>
+time_zone: "America/New_York"
+kube_vip:
+  ip: 10.100.222.174
+  version: "v0.6.3"
+metal_lb:
+  version: "v0.13.11"
+  ips:
+    - "10.100.222.227/32"
+    - "10.100.222.228/32"
+masters:
+  specs:
+    ram: 24576
+    cpus: 2
+    cores: 2
+    gateway: 10.100.222.5
+    hdd: 16
+  ips:
+    - 10.100.222.235
+    - 10.100.222.236
+    - 10.100.222.237
+agents:
+  specs:
+    ram: 24576
+    cpus: 2
+    cores: 2
+    gateway: 10.100.222.5
+    hdd: 512
+  ips:
+    - 10.100.222.239
+    - 10.100.222.242
+proxmox:
+  zone: us-east-1
+  ips:
+    - 10.100.222.231
+    - 10.100.222.232
+    - 10.100.222.233

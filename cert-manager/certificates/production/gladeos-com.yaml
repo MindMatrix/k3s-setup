@@ -1,0 +1,14 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gladeos-com
+  namespace: default
+spec:
+  secretName: gladeos-com-tls
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+  commonName: "*.gladeos.com"
+  dnsNames:
+    - "*.gladeos.com"

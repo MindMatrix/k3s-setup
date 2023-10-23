@@ -1,0 +1,42 @@
+---
+- name: Destroy VMs on Proxmox
+  hosts: localhost
+  vars_files:
+    - cluster.yaml # Replace with the name of your YAML file containing the specs
+  tasks:
+    - name: Round-robin stop master VMs
+      become: yes
+      become_user: root
+      command: >
+        qm stop {{ item.split('.')[-1] }}
+      loop: "{{ masters.ips }}"
+      loop_control:
+        index_var: idx
+      delegate_to: "{{ proxmox.ips[idx % proxmox.ips|length] }}"
+    - name: Round-robin destroy master VMs
+      become: yes
+      become_user: root
+      command: >
+        qm destroy {{ item.split('.')[-1] }}
+      loop: "{{ masters.ips }}"
+      loop_control:
+        index_var: idx
+      delegate_to: "{{ proxmox.ips[idx % proxmox.ips|length] }}"
+    - name: Round-robin stop agent VMs
+      become: yes
+      become_user: root
+      command: >
+        qm stop {{ item.split('.')[-1] }}
+      loop: "{{ agents.ips }}"
+      loop_control:
+        index_var: idx
+      delegate_to: "{{ proxmox.ips[idx % proxmox.ips|length] }}"
+    - name: Round-robin destroy agent VMs
+      become: yes
+      become_user: root
+      command: >
+        qm destroy {{ item.split('.')[-1] }}
+      loop: "{{ agents.ips }}"
+      loop_control:
+        index_var: idx
+      delegate_to: "{{ proxmox.ips[idx % proxmox.ips|length] }}"

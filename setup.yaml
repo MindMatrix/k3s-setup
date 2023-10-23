@@ -1,0 +1,26 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Read YAML file
+      include_vars:
+        file: ./cluster.yaml
+        name: cluster_data
+    - name: Generate INI file from template
+      template:
+        src: cluster.ini.j2
+        dest: hosts.ini
+    - name: Generate proxmox.yml
+      template:
+        src: proxmox.yml.j2
+        dest: group_vars/proxmox.yml
+    - name: Generate all.yml
+      template:
+        src: all.yml.j2
+        dest: group_vars/all.yml
+      vars:
+        k3s_token: "{{ lookup('env', 'K3S_TOKEN') }}"
+        k3s_version: "{{ cluster_data.k3s_version }}"
+        ansible_user: "{{ cluster_data.ansible_user }}"
+        time_zone: "{{ cluster_data.time_zone }}"
+        kube_vip: "{{ cluster_data.kube_vip }}"
+        metal_lb: "{{ cluster_data.metal_lb }}"

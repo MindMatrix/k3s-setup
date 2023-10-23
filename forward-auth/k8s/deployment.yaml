@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forward-auth
+spec:
+  selector:
+    matchLabels:
+      app: forward-auth
+  template:
+    metadata:
+      labels:
+        app: forward-auth
+    spec:
+      imagePullSecrets:
+        - name: docker-hub
+      containers:
+        - name: forward-auth
+          image: mindmatrix/forward-auth:1.0.4
+          env:
+            - name: "OAuth__ClientID"
+              valueFrom:
+                secretKeyRef:
+                  name: forward-auth
+                  key: client-id
+            - name: "OAuth__ClientSecret"
+              valueFrom:
+                secretKeyRef:
+                  name: forward-auth
+                  key: client-secret
+            - name: "OAuth__JwtKey"
+              valueFrom:
+                secretKeyRef:
+                  name: forward-auth
+                  key: jwt-key
+            - name: "OAuth__Domain"
+              valueFrom:
+                secretKeyRef:
+                  name: forward-auth
+                  key: domain
+          ports:
+            - containerPort: 4181

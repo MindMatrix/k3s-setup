@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-auth
+spec:
+  selector:
+    matchLabels:
+      app: test-auth
+  template:
+    metadata:
+      labels:
+        app: test-auth
+    spec:
+      imagePullSecrets:
+        - name: docker-hub
+      containers:
+        - name: test-auth
+          image: mindmatrix/test-auth:1.0.4
+          ports:
+            - containerPort: 4181

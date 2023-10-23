@@ -1,0 +1,11 @@
+installCRDs: false
+replicaCount: 1
+extraArgs: #these name servers point to digital ocean so it can detect dns challenges for lets encrypt
+  - --dns01-recursive-nameservers=173.245.58.51:53,173.245.59.41:53,198.41.222.173:53
+  - --dns01-recursive-nameservers-only
+podDnsPolicy: None
+podDnsConfig:
+  nameservers: #these dns servers point to cloudflare so that the pod can make out going requests to the internet
+    - 9.9.9.9
+    - 1.1.1.1
+    - 8.8.8.8
