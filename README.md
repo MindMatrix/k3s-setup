@@ -60,14 +60,16 @@ This section explains the requirements and setup steps for PROXMOX which is a op
 8. On each proxmox server you should create a user account and later use `scp-copy-id <user>@<proxip>` for each proxmox server from the ansible machine after you run the init command on ansible.  
 **Note:** This password you pick for this user will be the password you must supply when using `ansible-playbok --ask-become-password` to use `sudo`.  
 ```shell
-adduser <GITHUB_USER>
-usermod -aG sudo <GITHUB_USER>
+read -p "Enter GitHub username: " GITHUB_USER
+adduser $GITHUB_USER
+usermod -aG sudo $GITHUB_USER
 apt update && apt install sudo -y
 ```
 ## 2. Ansible <a id="ansible"></a>
 Ansible is a tool that utilizes a concept called `playbooks`. These playbooks describe a series of actions to perform or maintain on a list of servers. For example you could have it call `apt update && apt upgrade` to upgrade all hosts or you could have it script the setup of `timesyncd` and auto load the NTP from an air gapped time server. Ansible is also used to execute all the VM creation scripts across the PROXMOX machines and also create and maintain K3S (kubernetes).
 
-1. Here is the suggested script to create the default ansible for creating the rest of the configuration.
+1. Here is the suggested script to create the default ansible for creating the rest of the configuration.  
+**NOTE:** The VM takes a minute or 2 to initialize with all the cloud-init settings the first time.
 ```shell
 curl -sfL https://raw.githubusercontent.com/MindMatrix/k3s-setup/main/create-vm.sh | bash -s -- "ansible-<IP_SUFFIX>" <IP_SUFFIX> "<IP>/24" "<GATEWAY>" 4096 2 2 16G "<GITHUB_USER>"
 ```
@@ -85,7 +87,8 @@ curl -sfL https://raw.githubusercontent.com/MindMatrix/k3s-setup/main/init-ansib
 **Note:** The `ansible_user` should match your github user.  
 **Note:** Please make sure to have an `odd` number of `master` nodes to have proper `etcd` qurom.
 
-3. Run the following to build the `hosts.ini` for `ansible` from the `k3s-setup` folder. This will also generate a `k3s_token`.
+3. Run the following to build the `hosts.ini` for `ansible` from the `k3s-setup` folder. This will also generate a `k3s_token`.  
+**NOTE: COPY THE IDS, IMPORT KEYS IN TO GITHUB, MAKE SURE PROXMOX USER WAS CREATED, EDIT THE CLUSTER.YAML**
 ```shell
 ./setup.sh
 ```
@@ -93,7 +96,8 @@ curl -sfL https://raw.githubusercontent.com/MindMatrix/k3s-setup/main/init-ansib
 ```shell
 ./vm.sh
 ```
-5. Run the following to update to the latest, install qemu-giest-agent and sync time clocks to expedient.
+5. Run the following to update to the latest, install qemu-giest-agent and sync time clocks to expedient.  
+**NOTE: The last VM will take 1-2 minutes to initialize from the previous command. Its best to check ssh access prior to running this command and moving on!**
 ```shell
 ./config.sh
 ```

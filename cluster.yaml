@@ -9,30 +9,34 @@ metal_lb:
   ips:
     - "10.100.222.227/32"
     - "10.100.222.228/32"
+gateway: 10.100.222.5
 masters:
   specs:
-    ram: 24576
-    cpus: 2
-    cores: 2
-    gateway: 10.100.222.5
-    hdd: 16
-  ips:
-    - 10.100.222.235
-    - 10.100.222.236
-    - 10.100.222.237
-agents:
-  specs:
-    ram: 24576
-    cpus: 2
-    cores: 2
-    gateway: 10.100.222.5
-    hdd: 512
-  ips:
-    - 10.100.222.239
-    - 10.100.222.242
-proxmox:
-  zone: us-east-1
-  ips:
-    - 10.100.222.231
-    - 10.100.222.232
-    - 10.100.222.233
+    - name: master
+      ram: 24576
+      cpus: 2
+      cores: 2
+      hdd: 16
+    - name: agent
+      ram: 24576
+      cpus: 2
+      cores: 2
+      gateway: 10.100.222.5
+      hdd: 512
+config:
+  - ip: 10.100.222.231
+    zone: us-east-1a
+    masters:
+      - 10.100.222.233
+    agents:
+      - 10.100.222.239
+  - ip: 10.100.222.232
+    zone: us-east-1b
+    masters:
+      - 10.100.222.236
+    agents:
+      - 10.100.222.242
+  - ip: 10.100.222.233
+    zone: us-east-1c
+    masters:
+      - 10.100.222.237

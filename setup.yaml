@@ -1,26 +1,40 @@
 ---
-- hosts: localhost
+- name: Create VMs on Proxmox
+  hosts: localhost
+  vars_files:
+    - cluster.yaml  # Your YAML file containing the specs
   tasks:
-    - name: Read YAML file
-      include_vars:
-        file: ./cluster.yaml
-        name: cluster_data
-    - name: Generate INI file from template
-      template:
-        src: cluster.ini.j2
-        dest: hosts.ini
-    - name: Generate proxmox.yml
-      template:
-        src: proxmox.yml.j2
-        dest: group_vars/proxmox.yml
-    - name: Generate all.yml
-      template:
-        src: all.yml.j2
-        dest: group_vars/all.yml
-      vars:
-        k3s_token: "{{ lookup('env', 'K3S_TOKEN') }}"
-        k3s_version: "{{ cluster_data.k3s_version }}"
-        ansible_user: "{{ cluster_data.ansible_user }}"
-        time_zone: "{{ cluster_data.time_zone }}"
-        kube_vip: "{{ cluster_data.kube_vip }}"
-        metal_lb: "{{ cluster_data.metal_lb }}"
+    - name: Download the script
+      get_url:
+        force: yes
+        url: "https://raw.githubusercontent.com/MindMatrix/k3s-setup/main/create-vm.sh"
+        dest: "/tmp/create-vm.sh"
+        mode: "0777"
+      delegate_to: "{{ item.ip }}"
+      loop: "{{ config }}"
+
+    - name: Create master VMs
+      become: yes
+      become_user: root
+      command: >
+        /tmp/create-vm.sh "k3s-master-{{ ip.split('.') | last }}" "{{ ip.split('.') | last }}" "{{ ip }}/24" "{{ gateway }}"
+        "{{ masters.specs | selectattr('name', 'equalto', 'master') | map(attribute='ram') | first }}"
+        "{{ masters.specs | selectattr('name', 'equalto', 'master') | map(attribute='cpus') | first }}"
+        "{{ masters.specs | selectattr('name', 'equalto', 'master') | map(attribute='cores') | first }}"
+        "{{ masters.specs | selectattr('name', 'equalto', 'master') | map(attribute='hdd') | first }}G" "{{ ansible_user }}"
+      loop: "{{ item.masters }}"
+      delegate_to: "{{ item.ip }}"
+      loop: "{{ config }}"
+
+    - name: Create agent VMs
+      become: yes
+      become_user: root
+      command: >
+        /tmp/create-vm.sh "k3s-agent-{{ ip.split('.') | last }}" "{{ ip.split('.') | last }}" "{{ ip }}/24" "{{ gateway }}"
+        "{{ masters.specs | selectattr('name', 'equalto', 'agent') | map(attribute='ram') | first }}"
+        "{{ masters.specs | selectattr('name', 'equalto', 'agent') | map(attribute='cpus') | first }}"
+        "{{ masters.specs | selectattr('name', 'equalto', 'agent') | map(attribute='cores') | first }}"
+        "{{ masters.specs | selectattr('name', 'equalto', 'agent') | map(attribute='hdd') | first }}G" "{{ ansible_user }}"
+      loop: "{{ item.agents }}"
+      delegate_to: "{{ item.ip }}"
+      loop: "{{ config }}"

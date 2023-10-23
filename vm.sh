@@ -1,2 +1,2 @@
 #!/bin/bash
-ansible-playbook playbooks/vm.yaml -K
+ansible-playbook vm.yaml -K

@@ -1,11 +1,15 @@
 [master]
-{% for ip in cluster_data.masters.ips %}
+{% for config in cluster_data.config %}
+{% for ip in config.masters %}
 {{ ip }}
+{% endfor %}
 {% endfor %}
 
 [node]
-{% for ip in cluster_data.agents.ips %}
+{% for config in cluster_data.config %}
+{% for ip in config.agents %}
 {{ ip }}
+{% endfor %}
 {% endfor %}
 
 [k3s_cluster:children]
