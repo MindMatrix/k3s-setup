@@ -1,0 +1,31 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: longhorn-dashboard
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`longhorn.gladeos.com`)
+      kind: Rule
+      services:
+        - name: longhorn-dashboard-bridge
+          port: 80
+      middlewares:
+        - name: default-headers
+        - name: forward-auth
+  tls:
+    secretName: gladeos-com-tls #production
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: longhorn-dashboard-bridge
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: longhorn-frontend.longhorn-system.svc.cluster.local
+  ports:
+    - port: 80
