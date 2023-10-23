@@ -189,21 +189,17 @@ kubectl apply -f cert-manager/issuers
 ```shell
 kubectl apply -f cert-manager/certificates/staging/gladeos.com.yaml
 ```
-7. Test nginx
-```shell
-kubectl apply -f cert-manager/nginx
-```
-8. To test that staging certificate you'll want to set proper hosts in the `cert-manager/nginx` folder and then run  
+7. To test that staging certificate you'll want to set proper hosts in the `cert-manager/nginx` folder and then run  
 **NOTE:** This can take several minutes to complete, if you set the replica to 1, you can do a `kubectl get pods -n cert-manager` and then grab the name of the pod running and watch the logs with `kubectl logs -n cert-manager -f <podname>`. You should eventually see that there are no more jobs pending and can test it.  
 **NOTE:** The default `nginx/ingress.yaml` points to a staging lets encrypt, so you will still get an invalid cert, but you need to view the cert and make sure it says staging lets encrypt and not `default traefik cert` as this means the cert isn't detected. Once this works, you can switch the `ingress.yaml` to use the production cert after you run `kubectl apply -f cert-manager/certificates/production/gladeos-com.yaml` (do not run this until you tested staging!!!!)  
-**NOTE:** before this can work, you'll need to setup forward auth below  
 ```shell
 kubectl apply -f cert-manager/nginx
 ```
-9. Test the url, once it works, you need to apply production (after verifying the cert says STAGING and not default trafik cert).
+8. Test the url, once it works, you need to apply production (after verifying the cert says STAGING and not default trafik cert).
 ```shell
 kubectl apply -f cert-manager/certificates/production/gladeos.com.yaml
 ```
+**NOTE:** After you run the command above, you mean need to do a `kubectl delete -f cert-manager/nginx` and a `apply` to pick up the latest changes to the cert (you also need to update the ingress route to the correct TLS setting). Don't do this until the challenges and everything have resolved.
 ## 8. Forward Auth <a id="forwardauth"></a>
 This middleware will be loaded in to kubernetes and will be used to protect all internal endpoints for devops and dashboards needed to maintain the state of the cluster. It will utilize out oAuth + Teams to provide access to specific internal tools.  
 **NOTE:** dockerhub step has to be completed before this step or kubernetes will not have access to the private images on docker hub.
