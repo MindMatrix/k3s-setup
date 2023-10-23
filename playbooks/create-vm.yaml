@@ -1,0 +1,21 @@
+---
+- name: Create master VMs
+  become: yes
+  become_user: root
+  command: >
+    /tmp/create-vm.sh "k3s-master-{{ master_ip.split('.') | last }}" "{{ master_ip.split('.') | last }}" "{{ master_ip }}/24" "{{ gateway }}"
+    "{{ master.ram }}" "{{ master.cpus }}" "{{ master.cores }}" "{{ master.hdd }}G" "{{ ansible_user }}"
+  loop: "{{ current_vm.masters }}"
+  loop_control:
+    loop_var: master_ip
+  delegate_to: "{{ current_vm.ip }}"
+- name: Create agent VMs
+  become: yes
+  become_user: root
+  command: >
+    /tmp/create-vm.sh "k3s-agent-{{ agent_ip.split('.') | last }}" "{{ agent_ip.split('.') | last }}" "{{ agent_ip }}/24" "{{ gateway }}"
+    "{{ agent.ram }}" "{{ agent.cpus }}" "{{ agent.cores }}" "{{ agent.hdd }}G" "{{ ansible_user }}"
+  loop: "{{ current_vm.agents }}"
+  loop_control:
+    loop_var: agent_ip
+  delegate_to: "{{ current_vm.ip }}"

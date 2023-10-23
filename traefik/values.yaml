@@ -16,7 +16,8 @@ deployment:
 
 ports:
   web:
-    redirectTo: websecure
+    redirectTo:
+      port: websecure
   websecure:
     tls:
       enabled: true
@@ -45,6 +46,6 @@ service:
   annotations: {}
   labels: {}
   spec:
-    loadBalancerIP: 10.100.222.202 #192.168.30.80 # this should be an IP in the MetalLB range
+    loadBalancerIP: 10.100.126.215 # this should be an IP in the MetalLB range
   loadBalancerSourceRanges: []
   externalIPs: []

@@ -1,14 +1,14 @@
 ---
 - name: Set node affinity
+  gather_facts: no
   hosts: localhost
   vars_files:
     - cluster.yaml # Replace with the name of your YAML file containing the specs
   tasks:
-    - name: Label nodes with round-robin proxmox affinity
-      become: yes
-      command: >
-        kubectl label nodes k3s-agent-{{ item.split('.') | last }} topology.kubernetes.io/zone={{ proxmox.zone }}-{{ (proxmox.ips[idx % proxmox.ips|length]|split('.')) | last }} --overwrite
-      loop: "{{ agents.ips }}"
+    - name: Set node affinity
+      include_tasks: playbooks/node-affinity.yaml
+      loop: "{{ vms }}"
       loop_control:
-        index_var: idx
-      delegate_to: "{{ masters.ips[0] }}"
+        loop_var: vm
+      vars:
+        current_vm: "{{ vm }}"

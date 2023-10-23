@@ -1,0 +1,19 @@
+---
+- name: Stop master vm
+  become: yes
+  become_user: root
+  command: >
+    qm stop {{ master_ip.split('.') | last }}
+  loop: "{{ current_vm.masters }}"
+  loop_control:
+    loop_var: master_ip
+  delegate_to: "{{ current_vm.ip }}"
+- name: Stop agent vm
+  become: yes
+  become_user: root
+  command: >
+    qm stop {{ agent_ip.split('.') | last }}
+  loop: "{{ current_vm.agents }}"
+  loop_control:
+    loop_var: agent_ip
+  delegate_to: "{{ current_vm.ip }}"

@@ -5,9 +5,9 @@
 3. [Kubernetes](#kurbenetes)
 4. [Longhorn FileSystem](#longhorn)
 5. [Docker Hub](#dockerhub)
-6. [Forward Auth](#forwardauth)
-7. [Traefik](#traefik)
-8. [Cert Manager](#certmanager)
+6. [Traefik](#traefik)
+7. [Cert Manager](#certmanager)
+8. [Forward Auth](#forwardauth)
 9. [Deploy Kubernetes Dashboard](#kubernetesdashboard)
 10. [Deploy Traefik Dashboard](#traefikdashboard)
 11. [Finalize](#finalize)
@@ -123,13 +123,9 @@ To allow the repository to pull private images from our mindmatrix docker hub re
 1. You can run the docker hub script and fill in the questions it asks you. You will need an access token from docker and will need to set it as an environment variable.
 ```shell
 docker-hub.bat
+./docker-hub.sh
 ```
-
-## 6. Forward Auth <a id="forwardauth"></a>
-This middleware will be loaded in to kubernetes and will be used to protect all internal endpoints for devops and dashboards needed to maintain the state of the cluster. It will utilize out oAuth + Teams to provide access to specific internal tools.  
-**NOTE:** dockerhub step has to be completed before this step or kubernetes will not have access to the private images on docker hub.
-
-## 7. Traefik <a id="traefik"></a>
+## 6. Traefik <a id="traefik"></a>
 This sits inside of kubernetes with a public IP address both from the internet and the network. It will replace our nginx load balancer and handle all incoming external requests to properly route them where they need to go. It will also apply middleware like `forward-auth` to protect internal resources instead of each application needing to build it in.
 
 1. You'll need to have `kubectl` and `helm` installed on a machine. You will need to copy the `~/.kube/config` file from one of the `k3s-master` nodes to your machine in to the same path. If you already have something like docker installed and have more than one kubectl endpoint you manage, you will need to edit your local file and manually merge the `kube config` to yours. You can use `kubectx` to switch between the contexts.
@@ -140,9 +136,9 @@ helm repo add traefik https://helm.traefik.io/traefik
 helm repo update
 ``` 
 4. Install traefik with the custom values, **NOTE**: Edit `values.yaml` first!  
-**NOTE:** To make a change to values.yaml you need to run `helm upgrade traefik traefik/traefik -n traefik -f traefik/values.yaml --create-namespace`.
+**NOTE:** To make a change to values.yaml you need to run `helm upgrade traefik traefik/traefik -n traefik -f traefik/values.yaml`.
 ```
-helm install --namespace=traefik traefik traefik/traefik --values=traefik/values.yaml
+helm install --namespace=traefik traefik traefik/traefik --values=traefik/values.yaml --create-namespace
 ```
 5. Verify that traefik got an ip under `EXTERANL-IP`
 ```shell
@@ -161,7 +157,7 @@ traefik          traefik           LoadBalancer   10.43.156.161   192.168.30.80 
 ```shell
 kubectl apply -f traefik/default-headers.yaml
 ```
-## 8. Cert Manager <a id="certmanager"></a>
+## 7. Cert Manager <a id="certmanager"></a>
 This deployment sits inside kubernetes and waits for certificate requests made inside kubernetes. It will handle communication with lets encrypt and digital ocean to auto create and update SSL certs for traefik. If you can't use lets encrypt and dns challenges, you will need to update the CRT and KEY as a secret to kubernetes instead and manually manage it.
 
 1. Add the heml info
@@ -186,19 +182,38 @@ helm install cert-manager jetstack/cert-manager --namespace cert-manager --value
 **NOTE:** On premise can not use our digital ocean accounts and must have their own digital ocean account with their own API keys. There are other servers too like cloudflare and godaddy.  
 **NOTE:** Update the file to have a proper access token!
 ```shell
-kubectl apply -f cert-manager/issuers/secret-do-token.yaml
+kubectl apply -f cert-manager/issuers
 ```
 6. Create the issuer for staging.  
 **NOTE:** Its critical you test this with staging first as lets encrypt production is rate limited and their rate limiting once **`WEEKLY`**!!!
 ```shell
 kubectl apply -f cert-manager/certificates/staging/gladeos.com.yaml
-kubectl apply -f cert-manager/certificates/production/gladeos.com.yaml
 ```
-7. To test that staging certificate you'll want to set proper hosts in the `cert-manager/nginx` folder and then run  
-**NOTE:** This can take several minutes to complete, if you set the replica to 1, you can do a `kubectl get pods -n cert-manager` and then grab the name of the pod running and watch the logs with `kubectl logs -n cert-manager -f <podname>`. You should eventually see that there are no more jobs pending and can test it.  
-**NOTE:** The default `nginx/ingress.yaml` points to a staging lets encrypt, so you will still get an invalid cert, but you need to view the cert and make sure it says staging lets encrypt and not `default traefik cert` as this means the cert isn't detected. Once this works, you can switch the `ingress.yaml` to use the production cert after you run `kubectl apply -f cert-manager/certificates/production/gladeos-com.yaml` (do not run this until you tested staging!!!!)
+7. Test nginx
 ```shell
 kubectl apply -f cert-manager/nginx
+```
+8. To test that staging certificate you'll want to set proper hosts in the `cert-manager/nginx` folder and then run  
+**NOTE:** This can take several minutes to complete, if you set the replica to 1, you can do a `kubectl get pods -n cert-manager` and then grab the name of the pod running and watch the logs with `kubectl logs -n cert-manager -f <podname>`. You should eventually see that there are no more jobs pending and can test it.  
+**NOTE:** The default `nginx/ingress.yaml` points to a staging lets encrypt, so you will still get an invalid cert, but you need to view the cert and make sure it says staging lets encrypt and not `default traefik cert` as this means the cert isn't detected. Once this works, you can switch the `ingress.yaml` to use the production cert after you run `kubectl apply -f cert-manager/certificates/production/gladeos-com.yaml` (do not run this until you tested staging!!!!)  
+**NOTE:** before this can work, you'll need to setup forward auth below  
+```shell
+kubectl apply -f cert-manager/nginx
+```
+9. Test the url, once it works, you need to apply production (after verifying the cert says STAGING and not default trafik cert).
+```shell
+kubectl apply -f cert-manager/certificates/production/gladeos.com.yaml
+```
+## 8. Forward Auth <a id="forwardauth"></a>
+This middleware will be loaded in to kubernetes and will be used to protect all internal endpoints for devops and dashboards needed to maintain the state of the cluster. It will utilize out oAuth + Teams to provide access to specific internal tools.  
+**NOTE:** dockerhub step has to be completed before this step or kubernetes will not have access to the private images on docker hub.
+1. You'll need to apply `forward-auth` k8s but will first need to confgure the `ingress.yaml` and `secrets.yaml` to staging for testing.
+```shell
+kubectl apply -f forward-auth/k8s
+```
+2. Since this deploys settings based on an older image, you should run from the `fordward-auth` directory
+```shell
+./build.sh
 ```
 ## 9. Deploy Kubernetes Dashboard <a id="kubernetesdashboard"></a>
 To successfully deploy the kubernetes dashboard to the cluster and secure it you will need to create a `service account` with correct `RBAC` permissions and you will need to have a properly deployed `forward-auth` which will protect the dashboard via `github oauth` and will also forward the `ID Token` upstream to auto auth in to the dashboard.
