@@ -17,7 +17,6 @@ spec:
           port: 80
       middlewares:
         - name: default-headers
-        - name: forward-auth
   tls:
     secretName: gladeos-com-staging-tls #staging
     #secretName: gladeos-com-tls #production
