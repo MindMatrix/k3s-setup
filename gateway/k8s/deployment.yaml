@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      imagePullSecrets:
+        - name: docker-hub
+      containers:
+        - name: gateway
+          image: mindmatrix/gateway:1.0.4
+          env:
+            - name: "OAuth__ClientID"
+              valueFrom:
+                secretKeyRef:
+                  name: gateway
+                  key: client-id
+            - name: "OAuth__ClientSecret"
+              valueFrom:
+                secretKeyRef:
+                  name: gateway
+                  key: client-secret
+            - name: "OAuth__JwtKey"
+              valueFrom:
+                secretKeyRef:
+                  name: gateway
+                  key: jwt-key
+            - name: "OAuth__Domain"
+              valueFrom:
+                secretKeyRef:
+                  name: gateway
+                  key: domain
+          ports:
+            - containerPort: 4111

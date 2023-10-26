@@ -1,0 +1,102 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: longhorn
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`longhorn.gladeos.dev`)
+      kind: Rule
+      services:
+        - name: gateway
+          port: 4111
+      middlewares:
+        - name: default-headers
+        - name: github-auth
+  tls:
+    secretName: gladeos-dev-tls #production
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: kubernetes-dashboard
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`kubernetes.gladeos.dev`)
+      kind: Rule
+      services:
+        - name: gateway
+          port: 4111
+      middlewares:
+        - name: default-headers
+        - name: github-auth
+  tls:
+    secretName: gladeos-dev-tls #production
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-dashboard
+  namespace: traefik
+  labels:
+    app.kubernetes.io/instance: traefik
+    app.kubernetes.io/name: traefik-dashboard
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 9000
+      protocol: TCP
+  selector:
+    #app: traefik
+    app.kubernetes.io/instance: traefik-traefik
+    app.kubernetes.io/name: traefik
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`traefik2.gladeos.dev`)
+      kind: Rule
+      services:
+        - name: gateway
+          port: 4111
+      middlewares:
+        - name: default-headers
+        - name: github-auth
+  tls:
+    secretName: gladeos-dev-tls #production
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: gateway
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`auth.gladeos.dev`)
+      kind: Rule
+      services:
+        - name: gateway
+          port: 4111
+      middlewares:
+        - name: default-headers
+  tls:
+    secretName: gladeos-dev-tls #production

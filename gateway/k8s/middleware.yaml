@@ -1,0 +1,9 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: github-auth
+spec:
+  headers:
+    customRequestHeaders:
+      X-Github-Auth: "true"
