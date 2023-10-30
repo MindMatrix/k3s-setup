@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: update-ip-whitelist
+spec:
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  schedule: "*/15 * * * *" # every X minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: cronjob-service-account
+          imagePullSecrets:
+            - name: docker-hub
+          containers:
+            - name: update-ip
+              image: mindmatrix/ip-whitelist:0.11
+          restartPolicy: Never
+      backoffLimit: 0

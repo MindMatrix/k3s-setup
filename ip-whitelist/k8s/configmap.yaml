@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ip-whitelist
+data:
+  domains: |
+    - example.com
+  ips: |
+    - 10.100.126.0/24
