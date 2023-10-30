@@ -106,18 +106,7 @@ curl -sfL https://raw.githubusercontent.com/MindMatrix/k3s-setup/main/init-ansib
 ./deploy.sh
 ```
 
-## 4. Longhorn FileSystem <a id="longhorn"></a>
-Longhorn will use the storage space of the k3s agents as a distributed file system. You need to set a zone affinity for each agent and disable the affinity flag on longhorn. Each replica will be spread across the zones evenly so that a replica can't be on the same physical server. The storage space of all the agents should not exceed more then 50% of all available space totaled on all PROXMOX servers combined, this ensures that if a proxmox node needs to be shutdown, all the agents can be migrated to other proxmox machines for a short period and still function without running out of storage space.  
-**NOTE:** The `./deploy.sh` script will set the zone affinty to the `cluster.yaml` `proxmox: zone` name and append the last proxmox ip segment to the name. This can also be used later to determine which nodes need to be migrated back to which server once you bring it back up.
-
-1. Set the helm charts and install longhorn with zone affinity off.
-```shell
-helm repo add longhorn https://charts.longhorn.io
-helm repo update
-helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace --version 1.5.1 --set defaultSettings.zoneAntiAffinity=false
-```
-
-## 5. Docker Hub <a id="dockerhub"></a>
+## 4. Docker Hub <a id="dockerhub"></a>
 To allow the repository to pull private images from our mindmatrix docker hub repository the following needs to be configured.
 
 1. You can run the docker hub script and fill in the questions it asks you. You will need an access token from docker and will need to set it as an environment variable.
@@ -125,7 +114,7 @@ To allow the repository to pull private images from our mindmatrix docker hub re
 docker-hub.bat
 ./docker-hub.sh
 ```
-## 6. Traefik <a id="traefik"></a>
+## 5. Traefik <a id="traefik"></a>
 This sits inside of kubernetes with a public IP address both from the internet and the network. It will replace our nginx load balancer and handle all incoming external requests to properly route them where they need to go. It will also apply middleware like `forward-auth` to protect internal resources instead of each application needing to build it in.
 
 1. You'll need to have `kubectl` and `helm` installed on a machine. You will need to copy the `~/.kube/config` file from one of the `k3s-master` nodes to your machine in to the same path. If you already have something like docker installed and have more than one kubectl endpoint you manage, you will need to edit your local file and manually merge the `kube config` to yours. You can use `kubectx` to switch between the contexts.
@@ -157,7 +146,7 @@ traefik          traefik           LoadBalancer   10.43.156.161   192.168.30.80 
 ```shell
 kubectl apply -f traefik/default-headers.yaml
 ```
-## 7. Cert Manager <a id="certmanager"></a>
+## 6. Cert Manager <a id="certmanager"></a>
 This deployment sits inside kubernetes and waits for certificate requests made inside kubernetes. It will handle communication with lets encrypt and digital ocean to auto create and update SSL certs for traefik. If you can't use lets encrypt and dns challenges, you will need to update the CRT and KEY as a secret to kubernetes instead and manually manage it.
 
 1. Add the heml info
@@ -200,18 +189,23 @@ kubectl apply -f cert-manager/nginx
 kubectl apply -f cert-manager/certificates/production/gladeos.com.yaml
 ```
 **NOTE:** After you run the command above, you mean need to do a `kubectl delete -f cert-manager/nginx` and a `apply` to pick up the latest changes to the cert (you also need to update the ingress route to the correct TLS setting). Don't do this until the challenges and everything have resolved.
-## 8. Forward Auth <a id="forwardauth"></a>
+## 7. Forward Auth & IP White list<a id="forwardauth"></a>
 This middleware will be loaded in to kubernetes and will be used to protect all internal endpoints for devops and dashboards needed to maintain the state of the cluster. It will utilize out oAuth + Teams to provide access to specific internal tools.  
 **NOTE:** dockerhub step has to be completed before this step or kubernetes will not have access to the private images on docker hub.
 1. You'll need to apply `forward-auth` k8s but will first need to confgure the `ingress.yaml` and `secrets.yaml` to staging for testing.
 ```shell
 kubectl apply -f forward-auth/k8s
 ```
-2. Since this deploys settings based on an older image, you should run from the `fordward-auth` directory
+2. Since this deploys settings could be based on an older image, you should run from the `fordward-auth` directory
 ```shell
 ./build.sh
 ```
-## 9. Deploy Kubernetes Dashboard <a id="kubernetesdashboard"></a>
+3. Repeat the steps for IP White Listing  
+**NOTE:** You should check the latest version of `ip-whitelist` and update the `cron.yaml`. You also need to update the `configmap.yaml` with the list of domains and ips to allow access, this job will refresh the data every 15 mins in the `ip-whitelist-middleware.yaml`.
+```shell
+kubectl apply -f ip-whitelist/k8s
+```
+## 8. Deploy Kubernetes Dashboard <a id="kubernetesdashboard"></a>
 To successfully deploy the kubernetes dashboard to the cluster and secure it you will need to create a `service account` with correct `RBAC` permissions and you will need to have a properly deployed `forward-auth` which will protect the dashboard via `github oauth` and will also forward the `ID Token` upstream to auto auth in to the dashboard.
 
 1. Deploy kubernetes dashboard, should check for the latest version prior to doing this.
@@ -228,11 +222,25 @@ kubectl apply -f kubernetes-dashboard
 ```shell
 kubectl create token dashboard-adminuser -n kubernetes-dashboard
 ```
-## 10. Deploy Traefik Dashboard <a id="traefikdashboard"></a>
+## 9. Deploy Traefik Dashboard <a id="traefikdashboard"></a>
 
 1. Apply the ingress route to enable traefik
 ```shell
 kubectl apply -f traefik/traefik-dashboard
+```
+## 10. Longhorn FileSystem <a id="longhorn"></a>
+Longhorn will use the storage space of the k3s agents as a distributed file system. You need to set a zone affinity for each agent and disable the affinity flag on longhorn. Each replica will be spread across the zones evenly so that a replica can't be on the same physical server. The storage space of all the agents should not exceed more then 50% of all available space totaled on all PROXMOX servers combined, this ensures that if a proxmox node needs to be shutdown, all the agents can be migrated to other proxmox machines for a short period and still function without running out of storage space.  
+**NOTE:** The `./deploy.sh` script will set the zone affinty to the `cluster.yaml` `proxmox: zone` name and append the last proxmox ip segment to the name. This can also be used later to determine which nodes need to be migrated back to which server once you bring it back up.
+
+1. Set the helm charts and install longhorn with zone affinity off.
+```shell
+helm repo add longhorn https://charts.longhorn.io
+helm repo update
+helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace --version 1.5.1 --set defaultSettings.zoneAntiAffinity=false
+```
+2. Deploy longhorn dashboard
+```shell
+
 ```
 
 ## Finalize <a id="finalize"></a>

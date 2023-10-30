@@ -9,7 +9,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`traefik.gladeos.com`)
+    - match: Host(`traefik.gladeos.dev`)
       kind: Rule
       services:
         - name: api@internal
@@ -17,5 +17,6 @@ spec:
       middlewares:
         - name: default-headers
         - name: forward-auth
+        - name: ip-whitelist
   tls:
-    secretName: gladeos-com-tls #production
+    secretName: gladeos-dev-tls #production

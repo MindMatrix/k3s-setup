@@ -10,7 +10,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`nginx.gladeos.com`)
+    - match: Host(`nginx.gladeos.dev`)
       kind: Rule
       services:
         - name: nginx
@@ -18,5 +18,5 @@ spec:
       middlewares:
         - name: default-headers
   tls:
-    secretName: gladeos-com-staging-tls #staging
-    #secretName: gladeos-com-tls #production
+    secretName: gladeos-dev-staging-tls #staging
+    #secretName: gladeos-dev-tls #production

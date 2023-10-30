@@ -9,7 +9,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`auth.gladeos.com`)
+    - match: Host(`auth.gladeos.dev`)
       kind: Rule
       services:
         - name: forward-auth
@@ -17,4 +17,4 @@ spec:
       middlewares:
         - name: default-headers
   tls:
-    secretName: gladeos-com-tls #production
+    secretName: gladeos-dev-tls #production

@@ -9,7 +9,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`k3s.gladeos.com`)
+    - match: Host(`k3s.gladeos.dev`)
       kind: Rule
       services:
         - name: kubernetes-dashboard-bridge
@@ -17,8 +17,9 @@ spec:
       middlewares:
         - name: default-headers
         - name: forward-auth
+        - name: ip-whitelist
   tls:
-    secretName: gladeos-com-tls #production
+    secretName: gladeos-dev-tls #production
 ---
 apiVersion: v1
 kind: Service
