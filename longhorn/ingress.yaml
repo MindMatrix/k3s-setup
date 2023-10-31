@@ -15,8 +15,8 @@ spec:
           port: 80
       middlewares:
         - name: default-headers
-        - name: forward-auth
         - name: ip-whitelist
+        - name: forward-auth
   tls:
     secretName: gladeos-dev-tls #production
 ---
