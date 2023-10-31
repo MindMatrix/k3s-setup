@@ -13,32 +13,8 @@
 11. [Finalize](#finalize)
 
 ## 0. Intro <a id="intro"></a>
-This article assumes you have a basic understanding of kubernetes and proxmox. Several of the steps assume that you know to switch between proxmox, ansible and a local machine to run specific commands. For example, the vm creation happens of proxmox, the auto configuration happens on ansible and any time you are running helm or kubectl you need to be on a local machine with `k3s-setup` repository also checked out and having your `./kube/config` updated to access the server.
 
-I suggest you use something like `git bash` any time you are working with kubernetes and use the following prompt to ensure that you are ALWAYS aware of what cluster you are accessing.
-
-```shell
- parse_kube_context() {     
-    kubectx=$(kubectl config current-context 2>/dev/null);     
-    if [[ ! -z "$kubectx" ]]; then         
-        echo -e "(\e[34m$kubectx\e[0m)";     
-    else         
-        echo "";     
-    fi; 
-}
-parse_git_branch() {     
-    git_branch=$(git symbolic-ref HEAD 2>/dev/null | awk 'BEGIN{FS="/"} {print $NF}');     
-    if [[ ! -z "$git_branch" ]]; then         
-        echo -e "(\e[32m$git_branch\e[0m)";     
-    else         
-        echo "";     
-    fi; 
-}
-export PS1='\[\033[32m\]$(kubectx -c):\[\033[34m\]$(git branch --show-current):\[\033[33m\]\w\[\033[00m\]$ '
-
-```
-
-The first part of the prompt will give you the name of the `kubectx` you are working on which is critical to know so you don't break another cluster when working with multiple clusters like `dvl` and `prod`.
+This article assumes you have a basic understanding of kubernetes and proxmox. Several of the steps assume that you know to switch between proxmox and ansible to run specific commands. The majority of all configuration will be saved and executed from the created ansible server.
 
 Additionally there will be several places you need to fill in the blank 
 - `<GITHUB_USER>` should be a valid github userid as it will download your public keys for server access.
@@ -105,13 +81,17 @@ curl -sfL https://raw.githubusercontent.com/MindMatrix/k3s-setup/main/init-ansib
 ```shell
 ./deploy.sh
 ```
+7. Copy the `kube config` from one of the `k3s master` nodes to the ansible machine so that the remaning steps can be carried out on the ansible machine instead of on a local machine.
+```shell
+mkdir ~/.kube
+scp 10.100.126.204:~/.kube/config ~/.kube/config
+```
 
 ## 4. Docker Hub <a id="dockerhub"></a>
 To allow the repository to pull private images from our mindmatrix docker hub repository the following needs to be configured.
 
 1. You can run the docker hub script and fill in the questions it asks you. You will need an access token from docker and will need to set it as an environment variable.
 ```shell
-docker-hub.bat
 ./docker-hub.sh
 ```
 ## 5. Traefik <a id="traefik"></a>
@@ -176,7 +156,7 @@ kubectl apply -f cert-manager/issuers
 6. Create the issuer for staging.  
 **NOTE:** Its critical you test this with staging first as lets encrypt production is rate limited and their rate limiting once **`WEEKLY`**!!!
 ```shell
-kubectl apply -f cert-manager/certificates/staging/gladeos.com.yaml
+kubectl apply -f cert-manager/certificates/staging/gladeos.dev.yaml
 ```
 7. To test that staging certificate you'll want to set proper hosts in the `cert-manager/nginx` folder and then run  
 **NOTE:** This can take several minutes to complete, if you set the replica to 1, you can do a `kubectl get pods -n cert-manager` and then grab the name of the pod running and watch the logs with `kubectl logs -n cert-manager -f <podname>`. You should eventually see that there are no more jobs pending and can test it.  
@@ -184,26 +164,45 @@ kubectl apply -f cert-manager/certificates/staging/gladeos.com.yaml
 ```shell
 kubectl apply -f cert-manager/nginx
 ```
-8. Test the url, once it works, you need to apply production (after verifying the cert says STAGING and not default trafik cert).
+8. Test the url, once it works, you need to apply production (after verifying the cert says STAGING and not default trafik cert).  
+**NOTE:** Update `cert-manager/nginx/ingress.yaml` to put to the new cert aka: `gladeos-dev-staging-tls` to `gladeos-dev-tls`
 ```shell
-kubectl apply -f cert-manager/certificates/production/gladeos.com.yaml
+kubectl apply -f cert-manager/certificates/production/gladeos.dev.yaml
 ```
-**NOTE:** After you run the command above, you mean need to do a `kubectl delete -f cert-manager/nginx` and a `apply` to pick up the latest changes to the cert (you also need to update the ingress route to the correct TLS setting). Don't do this until the challenges and everything have resolved.
+
 ## 7. Forward Auth & IP White list<a id="forwardauth"></a>
 This middleware will be loaded in to kubernetes and will be used to protect all internal endpoints for devops and dashboards needed to maintain the state of the cluster. It will utilize out oAuth + Teams to provide access to specific internal tools.  
 **NOTE:** dockerhub step has to be completed before this step or kubernetes will not have access to the private images on docker hub.
-1. You'll need to apply `forward-auth` k8s but will first need to confgure the `ingress.yaml` and `secrets.yaml` to staging for testing.
+1. You need to modify `deployment.yaml`, `ingress.yaml` and `secrets.yaml` to correct values, like domain, github oauth settings and so on. You also need to go to docker hub and get the latest release version of forward-auth and update the `deployment.yaml`
 ```shell
 kubectl apply -f forward-auth/k8s
 ```
-2. Since this deploys settings could be based on an older image, you should run from the `fordward-auth` directory
-```shell
-./build.sh
-```
-3. Repeat the steps for IP White Listing  
+2. Repeat the steps for IP White Listing  
 **NOTE:** You should check the latest version of `ip-whitelist` and update the `cron.yaml`. You also need to update the `configmap.yaml` with the list of domains and ips to allow access, this job will refresh the data every 15 mins in the `ip-whitelist-middleware.yaml`.
 ```shell
 kubectl apply -f ip-whitelist/k8s
+```
+3. IP White Listing is a cronjob in kubernetes that will rebuild the `ip-whitelist-middleware.yaml` every 15 minutes based on the data from `configmap.yaml`, so to add allowed IPs to the list, you edit the configmap and apply it with `kubectl apply -f 'ip-whitelist/configmap.yaml'`.  
+You should check back later to see if the job completed successfully by doing `kubectl get pods` and look for the job and determine its status. If it failed, you can always do `kubectl logs <pod_name>` and get the logs.  
+**NOTE:** You can manually trigger the job with the following, you should also delete the pod once done and verified.
+```shell
+kubectl create job --from=cronjob/update-ip-whitelist update-ip
+-whitelist-manual-run
+```
+Get the pod name and verify the logs `kubectl get pods -w` (this will watch for pod changes, you want to wait until the job says completed or failed)
+```shell
+kubectl logs <pod_name>
+```
+Verify the log data, aka
+```shell
+INFO:root:Resovled 'example.com' to '93.184.216.34/32'
+INFO:root:Appending '10.100.126.0/24'
+INFO:root:Appending '74.98.193.88/32'
+```
+Delete the pod and job
+```shell
+kubectl delete pod <pod_name>
+kubectl delete job update-ip-whitelist-manual-run
 ```
 ## 8. Deploy Kubernetes Dashboard <a id="kubernetesdashboard"></a>
 To successfully deploy the kubernetes dashboard to the cluster and secure it you will need to create a `service account` with correct `RBAC` permissions and you will need to have a properly deployed `forward-auth` which will protect the dashboard via `github oauth` and will also forward the `ID Token` upstream to auto auth in to the dashboard.
@@ -226,7 +225,7 @@ kubectl create token dashboard-adminuser -n kubernetes-dashboard
 
 1. Apply the ingress route to enable traefik
 ```shell
-kubectl apply -f traefik/traefik-dashboard
+kubectl apply -f traefik-dashboard
 ```
 ## 10. Longhorn FileSystem <a id="longhorn"></a>
 Longhorn will use the storage space of the k3s agents as a distributed file system. You need to set a zone affinity for each agent and disable the affinity flag on longhorn. Each replica will be spread across the zones evenly so that a replica can't be on the same physical server. The storage space of all the agents should not exceed more then 50% of all available space totaled on all PROXMOX servers combined, this ensures that if a proxmox node needs to be shutdown, all the agents can be migrated to other proxmox machines for a short period and still function without running out of storage space.  
@@ -240,7 +239,15 @@ helm install longhorn longhorn/longhorn --namespace longhorn-system --create-nam
 ```
 2. Deploy longhorn dashboard
 ```shell
-
+kubectl apply -f longhorn
+```
+3. You can test longhorn by deploying a test PVC to make sure it allocates it (note this can take several minutes until longhorn is fully init'ed).
+```shell
+kubectl apply -f longhorn/test
+```
+You can visit `longhorn.gladeos.dev` and wait for the PVC to be created, it should eventually show 1 volume attached. You can remove the test with
+```shell
+kubectl delete -f longhorn/test
 ```
 
 ## Finalize <a id="finalize"></a>
@@ -248,3 +255,6 @@ You should spend locking down the security, for example
 - disable password ssh access to proxmox
 - check pod security settings
 - double check the forward-auth middleware is set for all internal tools
+- check that the cronjob for ip-whitelist succeeded by this point
+- make sure you enabled cert-manager replica to 3 in `cert-manager/values.yaml` and then ran `helm upgrade cert-manager jetstack/cert-manager -n cert-manager -f cert-manager/values.yaml`
+- make sure traefik is set to 3 replicas if you reduced it to debug `helm upgrade traefik traefik/traefik -n traefik -f traefik/values.yaml`
