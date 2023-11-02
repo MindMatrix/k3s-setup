@@ -9,6 +9,8 @@
   loop_control:
     loop_var: master_ip
   delegate_to: "{{ current_vm.ip }}"
+  vars:
+    master: "{{ specs[current_vm.master_spec] }}"
 - name: Create agent VMs
   become: yes
   become_user: root
@@ -19,3 +21,5 @@
   loop_control:
     loop_var: agent_ip
   delegate_to: "{{ current_vm.ip }}"
+  vars:
+    agent: "{{ specs[current_vm.agent_spec] }}"

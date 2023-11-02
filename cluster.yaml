@@ -10,33 +10,37 @@ metal_lb:
     - "10.100.222.227/32"
     - "10.100.222.228/32"
 gateway: 10.100.222.5
-masters:
-  specs:
-    - name: master
-      ram: 24576
-      cpus: 2
-      cores: 2
-      hdd: 16
-    - name: agent
-      ram: 24576
-      cpus: 2
-      cores: 2
-      gateway: 10.100.222.5
-      hdd: 512
+specs:
+  master:
+    ram: 24576
+    cpus: 2
+    cores: 2
+    hdd: 16
+  agent:
+    ram: 24576
+    cpus: 2
+    cores: 2
+    hdd: 512
 config:
   - ip: 10.100.222.231
     zone: us-east-1a
+    master_spec: master
+    agent_spec: agent
     masters:
       - 10.100.222.233
     agents:
       - 10.100.222.239
   - ip: 10.100.222.232
     zone: us-east-1b
+    master_spec: master
+    agent_spec: agent
     masters:
       - 10.100.222.236
     agents:
       - 10.100.222.242
   - ip: 10.100.222.233
     zone: us-east-1c
+    master_spec: master
+    agent_spec: agent
     masters:
       - 10.100.222.237
