@@ -1,3 +1,5 @@
+**NOTE**: Need to document registry-cache, should be setup before longhorn
+
 # Table of Contents
 0. [Intro](#intro)
 1. [PROXMOX](#proxmox)  
@@ -186,8 +188,7 @@ kubectl apply -f ip-whitelist/k8s
 You should check back later to see if the job completed successfully by doing `kubectl get pods` and look for the job and determine its status. If it failed, you can always do `kubectl logs <pod_name>` and get the logs.  
 **NOTE:** You can manually trigger the job with the following, you should also delete the pod once done and verified.
 ```shell
-kubectl create job --from=cronjob/update-ip-whitelist update-ip
--whitelist-manual-run
+kubectl create job --from=cronjob/update-ip-whitelist update-ip-whitelist-manual-run
 ```
 Get the pod name and verify the logs `kubectl get pods -w` (this will watch for pod changes, you want to wait until the job says completed or failed)
 ```shell
@@ -201,9 +202,10 @@ INFO:root:Appending '74.98.193.88/32'
 ```
 Delete the pod and job
 ```shell
-kubectl delete pod <pod_name>
 kubectl delete job update-ip-whitelist-manual-run
 ```
+4. You should now verify that the white listing of ips is working by mdoifying the `cert-manager/nginx/ingress.yaml` and add `ip-whitelist` to the middleware section and verify you still have access to url after applying the changes.
+
 ## 8. Deploy Kubernetes Dashboard <a id="kubernetesdashboard"></a>
 To successfully deploy the kubernetes dashboard to the cluster and secure it you will need to create a `service account` with correct `RBAC` permissions and you will need to have a properly deployed `forward-auth` which will protect the dashboard via `github oauth` and will also forward the `ID Token` upstream to auto auth in to the dashboard.
 
@@ -211,7 +213,7 @@ To successfully deploy the kubernetes dashboard to the cluster and secure it you
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
 ```
-2. Run the following 
+2. Run the following (update ingress)
 ```shell
 kubectl apply -f kubernetes-dashboard
 ```
@@ -223,7 +225,8 @@ kubectl create token dashboard-adminuser -n kubernetes-dashboard
 ```
 ## 9. Deploy Traefik Dashboard <a id="traefikdashboard"></a>
 
-1. Apply the ingress route to enable traefik
+1. Apply the ingress route to enable traefik.  
+**NOTE: ** Edit the ingress.yaml file first.
 ```shell
 kubectl apply -f traefik-dashboard
 ```
@@ -237,7 +240,8 @@ helm repo add longhorn https://charts.longhorn.io
 helm repo update
 helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace --version 1.5.1 --set defaultSettings.zoneAntiAffinity=false
 ```
-2. Deploy longhorn dashboard
+2. Deploy longhorn dashboard.
+**NOTE:** Edit the ingress.yaml first.
 ```shell
 kubectl apply -f longhorn
 ```
@@ -248,6 +252,14 @@ kubectl apply -f longhorn/test
 You can visit `longhorn.gladeos.dev` and wait for the PVC to be created, it should eventually show 1 volume attached. You can remove the test with
 ```shell
 kubectl delete -f longhorn/test
+```
+## 11. Loki 
+This is a centeralized log system that will capture all standard output logs from pods and allow them to be queryable.
+
+1. Install the helm charts
+```shell
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
 ```
 
 ## Finalize <a id="finalize"></a>
