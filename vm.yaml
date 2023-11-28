@@ -11,10 +11,10 @@
         dest: "/tmp/create-vm.sh"
         mode: "0777"
       delegate_to: "{{ item.ip }}"
-      loop: "{{ vms }}"
+      loop: "{{ config }}"
     - name: Create vms
       include_tasks: playbooks/create-vm.yaml
-      loop: "{{ vms }}"
+      loop: "{{ config }}"
       loop_control:
         loop_var: vm
       vars:

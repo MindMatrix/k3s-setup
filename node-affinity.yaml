@@ -7,7 +7,7 @@
   tasks:
     - name: Set node affinity
       include_tasks: playbooks/node-affinity.yaml
-      loop: "{{ vms }}"
+      loop: "{{ config }}"
       loop_control:
         loop_var: vm
       vars:
