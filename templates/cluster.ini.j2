@@ -1,12 +1,12 @@
 [master]
-{% for vm in cluster_data.vms %}
+{% for vm in cluster_data.config %}
 {% for ip in vm.masters %}
 {{ ip }}
 {% endfor %}
 {% endfor %}
 
 [node]
-{% for vm in cluster_data.vms %}
+{% for vm in cluster_data.config %}
 {% for ip in vm.agents %}
 {{ ip }}
 {% endfor %}
