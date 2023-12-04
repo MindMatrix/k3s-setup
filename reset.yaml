@@ -7,14 +7,14 @@
   tasks:
     - name: Stop vm
       include_tasks: playbooks/qm-stop.yaml
-      loop: "{{ vms }}"
+      loop: "{{ config }}"
       loop_control:
         loop_var: vm
       vars:
         current_vm: "{{ vm }}"
     - name: Destroy vm
       include_tasks: playbooks/qm-destroy.yaml
-      loop: "{{ vms }}"
+      loop: "{{ config }}"
       loop_control:
         loop_var: vm
       vars:
