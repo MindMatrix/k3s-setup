@@ -61,7 +61,8 @@ curl -sfL https://raw.githubusercontent.com/MindMatrix/k3s-setup/main/init-ansib
 ## 3. Kubernetes <a id="kurbenetes"></a>
 1. After the init script is created it will also create a private key, the public portion of this key from `.ssh/id_ed25519.pub` should be import in to your github user account and this account should match the username you used through out.  
 
-2. Modify the `cluster.yaml` file in `k3s-setup` with the correct settings. You should look up the latest versions of `k3s`, `metallb` and `kube_vip`. You need to provide a list of IPs for `metallb` so it can create public services accessible to the network.  
+2. **NOTE: Your MetalLB first IP should be the `PUBLIC` to `INTERNAL` ip, if you public ip is `64.128.200.215` and points internally to `10.100.128.215` your first IP in the metal lb range should be `10.100.128.215` and should also be assigned to the ingress controller step.**  
+Modify the `cluster.yaml` file in `k3s-setup` with the correct settings. You should look up the latest versions of `k3s`, `metallb` and `kube_vip`. You need to provide a list of IPs for `metallb` so it can create public services accessible to the network.  
 **Note:** The `ansible_user` should match your github user.  
 **Note:** Please make sure to have an `odd` number of `master` nodes to have proper `etcd` qurom.
 
