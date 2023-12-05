@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cache-proxy-config
+data:
+  appsettings.json: |
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft.AspNetCore": "Information"
+        }
+      },
+      "AllowedHosts": "*",
+      "ReverseProxy": {
+        "Routes": {
+          "traefik-route": {
+            "ClusterId": "cluster",
+            "Match": {
+              "Hosts": [
+                "*"
+              ],
+              "Path": "{**catch-all}"
+            }
+          }
+        },
+        "Clusters": {
+          "cluster": {
+            "Destinations": {
+              "destination1": {
+                "Address": "http://10.100.128.31"
+              }
+            }
+          }
+        }
+      }
+    }

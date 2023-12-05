@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cache-proxy
+spec:
+  selector:
+    matchLabels:
+      app: cache-proxy
+  template:
+    metadata:
+      labels:
+        app: cache-proxy
+    spec:
+      imagePullSecrets:
+        - name: docker-hub
+      containers:
+        - name: cache-proxy
+          image: mindmatrix/cache-proxy:1.0.4
+          ports:
+            - containerPort: 4181
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: cache-proxy-config
