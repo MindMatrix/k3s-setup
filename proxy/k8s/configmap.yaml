@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxy-config
+data:
+  appsettings.json: |
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft.AspNetCore": "Information",
+          "Yarp.ReverseProxy": "Trace"
+        }
+      },
+      "AllowedHosts": "*",
+      "ReverseProxy": {
+        "Routes": {
+          "all": {
+            "ClusterId": "all",
+            "Match": {
+              "Hosts": [
+                "*"
+              ],
+              "Path": "{**catch-all}"
+            }
+          },
+          "tracking-st": {
+            "ClusterId": "tracking",
+            "Match": {
+              "Hosts": [
+                "*"
+              ],
+              "Path": "/st/{**catch-all}"
+            }
+          },
+          "tracking-wt": {
+            "ClusterId": "tracking",
+            "Match": {
+              "Hosts": [
+                "*"
+              ],
+              "Path": "/wt/{**catch-all}"
+            }
+          },
+          "tracking-track": {
+            "ClusterId": "tracking",
+            "Match": {
+              "Hosts": [
+                "*"
+              ],
+              "Path": "/track/{**catch-all}"
+            }
+          },
+          "tracking-t": {
+            "ClusterId": "tracking",
+            "Match": {
+              "Hosts": [
+                "*"
+              ],
+              "Path": "/_t/{**catch-all}"
+            }
+          },
+          "tracking-public-form": {
+            "ClusterId": "tracking",
+            "Match": {
+              "Hosts": [
+                "*"
+              ],
+              "Path": "/public/externalform2/{**catch-all}"
+            }
+          }
+        },
+        "Clusters": {
+          "all": {
+            "Destinations": {
+              "server0": {
+                "Address": "http://10.100.222.62:82"
+              }
+              ,
+              "server1": {
+                "Address": "http://10.100.222.63:82"
+              }                            
+            }
+          },
+          "tracking": {
+            "Destinations": {
+              "server0": {
+                "Address": "http://10.100.222.60:82"
+              },
+              "server1": {
+                "Address": "http://10.100.222.61:82"
+              }
+            }
+          }
+        }
+      }
+    }

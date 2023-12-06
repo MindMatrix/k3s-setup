@@ -1,0 +1,21 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: proxy
+  namespace: returnpath2
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`returnpath2.amp.vg`)
+      kind: Rule
+      services:
+        - name: proxy
+          port: 4181
+      middlewares:
+        - name: default-headers
+  tls:
+    secretName: amp-vg

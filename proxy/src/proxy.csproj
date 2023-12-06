@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Proxy</RootNamespace>
+    <PublishProfile>DefaultContainer</PublishProfile>
+    <ContainerRepository>mindmatrix/proxy</ContainerRepository>
+    <ContainerImageTag>1.0.4</ContainerImageTag>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ContainerPort Include="4181" Type="tcp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Yarp.ReverseProxy" Version="2.1.0" />
+  </ItemGroup>
+</Project>
