@@ -1,3 +1,8 @@
+## Undocumented Changes ##
+1. Kubeseal is now used to protect secrets from being read at the `kubectl get secrets` level and will be decrypted only when used inside of a pod and at pod init - copied to `C:\ProgramData\chocolatey` for easy use
+2. Helmify is used to convert a k8s yaml file collection to helm charts - copied to `C:\ProgramData\chocolatey` for easy use
+
+
 **NOTE**: Need to document registry-cache, should be setup before longhorn
 
 # Table of Contents
