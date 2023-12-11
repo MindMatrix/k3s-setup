@@ -1,7 +1,19 @@
 ## Undocumented Changes ##
 1. Kubeseal is now used to protect secrets from being read at the `kubectl get secrets` level and will be decrypted only when used inside of a pod and at pod init - copied to `C:\ProgramData\chocolatey` for easy use
+```shell
+helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
+helm repo update
+helm install sealed-secrets-controller sealed-secrets/sealed-secrets -n kube-system
+```
+
 2. Helmify is used to convert a k8s yaml file collection to helm charts - copied to `C:\ProgramData\chocolatey` for easy use
 
+3. These settings have been used on DEVL to determine if the k3s agent is going down due to high load. Note to add these later you need to evict all longhorn volumes off the node first.
+```
+sudo sed -i '/ExecStart/s/$/ --kubelet-arg=kube-reserved=cpu=500m,memory=500Mi --kubelet-arg=system-reserved=cpu=500m,memory=500Mi/' /etc/systemd/system/k3s-node.service
+sudo systemctl daemon-reload
+sudo systemctl restart k3s-node
+```
 
 **NOTE**: Need to document registry-cache, should be setup before longhorn
 
