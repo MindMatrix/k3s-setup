@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: docker-cli-pod
+spec:
+  containers:
+    - name: docker
+      image: alpinelinux/alpine-www
+  nodeName: k3s-agent-206

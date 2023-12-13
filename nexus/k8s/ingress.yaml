@@ -1,0 +1,22 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: nexus
+  #namespace: default
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`nexus.gladeos.net`)
+      kind: Rule
+      services:
+        - name: nexus-nexus-repository-manager
+          port: 8081
+      middlewares:
+        - name: default-headers
+      #   - name: ip-whitelist
+
+  tls:
+    secretName: gladeos-net-tls

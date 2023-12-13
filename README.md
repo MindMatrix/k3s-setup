@@ -288,3 +288,29 @@ You should spend locking down the security, for example
 - check that the cronjob for ip-whitelist succeeded by this point
 - make sure you enabled cert-manager replica to 3 in `cert-manager/values.yaml` and then ran `helm upgrade cert-manager jetstack/cert-manager -n cert-manager -f cert-manager/values.yaml`
 - make sure traefik is set to 3 replicas if you reduced it to debug `helm upgrade traefik traefik/traefik -n traefik -f traefik/values.yaml`
+
+
+
+
+# Off The script #
+## Sonatype ##
+1. Sonatype for proxy caching
+2. Setup s3 in sona type with docker host, proxy and group
+3. Create a docker role and user to has write access to docker host
+4. Modify all nodes to use this cache
+```
+sudo sed -i '/ExecStart/s/$/ --kubelet-arg=kube-reserved=cpu=500m,memory=500Mi --kubelet-arg=system-reserved=cpu=500m,memory=500Mi/' /etc/systemd/system/k3s-node.service
+sudo systemctl daemon-reload
+sudo systemctl restart k3s-node
+```
+```shell
+#linux
+ssh 10.100.128.207 "sudo mkdir -p /etc/rancher/k3s && echo 'mirrors:\n  docker.io:\n    endpoint:\n      - \"http://nexus-docker.nexus.svc.cluster.local:9901\"' | sudo tee /etc/rancher/k3s/registries.yaml"
+#windows
+
+k drain k3s-agent-206 --ignore-daemonsets --delete-emptydir-data
+ssh 10.100.128.206 "sudo sed -i '/ExecStart/s/$/ --kubelet-arg=kube-reserved=cpu=500m,memory=500Mi --kubelet-arg=system-reserved=cpu=500m,memory=500Mi/' /etc/systemd/system/k3s-node.service"
+ssh 10.100.128.206 "sudo mkdir -p /etc/rancher/k3s && printf 'mirrors:\\n  docker.io:\\n    endpoint:\\n      - \"https://docker.gladeos.net\"\\n' | sudo tee /etc/rancher/k3s/registries.yaml"
+ssh 10.100.128.206 "sudo systemctl daemon-reload && sudo systemctl restart k3s-node"
+k uncordon k3s-agent-206
+```

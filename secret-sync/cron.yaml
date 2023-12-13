@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: secret-sync
+spec:
+  schedule: "0 */6 * * *" # Every 6 hours; adjust as needed
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: secret-sync
+              image: mindmatrix/secret-sync:latest
+              env:
+                - name: SOURCE_NAMESPACE
+                  value: "default" # Replace with your source namespace
+                - name: TARGET_NAMESPACE
+                  value: "nexus" # Replace with your target namespace
+                - name: SECRET_NAMES
+                  value: "gladeos-net-tls docker-hub" # Comma-separated list of secrets
+          restartPolicy: OnFailure

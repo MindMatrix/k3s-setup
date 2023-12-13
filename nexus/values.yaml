@@ -1,0 +1,47 @@
+replicaCount: 1
+
+nexus:
+  imageName: sonatype/nexus3
+  imageTag: latest
+  imagePullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: 4Gi
+      cpu: 4
+    limits:
+      memory: 8Gi
+      cpu: 8
+  livenessProbe:
+    initialDelaySeconds: 180
+    periodSeconds: 30
+    failureThreshold: 6
+  readinessProbe:
+    initialDelaySeconds: 180
+    periodSeconds: 30
+    failureThreshold: 6
+  env:
+    - name: install4jAddVmParams
+      value: "-Xms3g -Xmx7g"
+
+service:
+  #enabled: false
+  type: ClusterIP
+  port: 8081
+
+ingress:
+  enabled: false
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  storageSize: 32Gi
+
+securityContext:
+  fsGroup: 2000
+  runAsUser: 2000
+
+tolerations: []
+
+nodeSelector: {}
+
+affinity: {}
