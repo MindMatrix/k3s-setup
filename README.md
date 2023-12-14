@@ -298,19 +298,21 @@ You should spend locking down the security, for example
 2. Setup s3 in sona type with docker host, proxy and group
 3. Create a docker role and user to has write access to docker host
 4. Modify all nodes to use this cache
-```
+
+```shell
 sudo sed -i '/ExecStart/s/$/ --kubelet-arg=kube-reserved=cpu=500m,memory=500Mi --kubelet-arg=system-reserved=cpu=500m,memory=500Mi/' /etc/systemd/system/k3s-node.service
 sudo systemctl daemon-reload
 sudo systemctl restart k3s-node
 ```
+
 ```shell
 #linux
 ssh 10.100.128.207 "sudo mkdir -p /etc/rancher/k3s && echo 'mirrors:\n  docker.io:\n    endpoint:\n      - \"http://nexus-docker.nexus.svc.cluster.local:9901\"' | sudo tee /etc/rancher/k3s/registries.yaml"
 #windows
 
-k drain k3s-agent-206 --ignore-daemonsets --delete-emptydir-data
-ssh 10.100.128.206 "sudo sed -i '/ExecStart/s/$/ --kubelet-arg=kube-reserved=cpu=500m,memory=500Mi --kubelet-arg=system-reserved=cpu=500m,memory=500Mi/' /etc/systemd/system/k3s-node.service"
-ssh 10.100.128.206 "sudo mkdir -p /etc/rancher/k3s && printf 'mirrors:\\n  docker.io:\\n    endpoint:\\n      - \"https://docker.gladeos.net\"\\n' | sudo tee /etc/rancher/k3s/registries.yaml"
-ssh 10.100.128.206 "sudo systemctl daemon-reload && sudo systemctl restart k3s-node"
-k uncordon k3s-agent-206
+k drain k3s-agent-213 --ignore-daemonsets --delete-emptydir-data
+ssh 10.100.128.213 "sudo sed -i '/ExecStart/s/$/ --kubelet-arg=kube-reserved=cpu=500m,memory=500Mi --kubelet-arg=system-reserved=cpu=500m,memory=500Mi/' /etc/systemd/system/k3s-node.service"
+ssh 10.100.128.213 "sudo mkdir -p /etc/rancher/k3s && printf 'mirrors:\\n  docker.io:\\n    endpoint:\\n      - \"https://docker.gladeos.net\"\\n' | sudo tee /etc/rancher/k3s/registries.yaml"
+ssh 10.100.128.213 "sudo systemctl daemon-reload && sudo systemctl restart k3s-node"
+k uncordon k3s-agent-213
 ```
