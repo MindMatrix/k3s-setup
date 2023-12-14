@@ -1,0 +1,82 @@
+# Jenkins Helm values file
+
+controller:
+  containers:
+    - name: jenkins
+      env:
+        - name: GITHUB_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: github-secret # Name of the Kubernetes secret
+              key: clientSecret # Key in the secret
+
+  # Jenkins master configuration
+  image: jenkins/jenkins
+  tag: latest
+  jenkinsUrl: "https://jenkins.gladeos.net"
+  # installPlugins:
+  #   - kubernetes:1.29.2
+  #   - workflow-job:2.40
+  #   - workflow-aggregator:2.6
+  #   - credentials-binding:1.24
+  #   - git:4.7.0
+  # Additional plugins can be added here
+  serviceType: ClusterIP
+  # Define resource limits and requests for the Jenkins master
+  resources:
+    limits:
+      cpu: "8"
+      memory: "8Gi"
+    requests:
+      cpu: "1"
+      memory: "500Mi"
+
+  # Jenkins configuration as code
+  JCasC:
+    enabled: true
+    configScripts:
+      welcome-message: |
+        jenkins:
+          systemMessage: "Welcome to our Jenkins!\n\n"
+      security-realm: |
+        jenkins:
+          securityRealm:
+            github:
+              githubWebUri: "https://github.com"
+              githubApiUri: "https://api.github.com"
+              clientID: """
+              clientSecret: ""  # This references the environment variable
+              oauthScopes: "read:org,user:email"
+agents:
+  # Jenkins agent configuration
+  enabled: true
+  image: jenkins/inbound-agent:latest
+  # Define resource limits and requests for each agent
+  resources:
+    limits:
+      cpu: "8"
+      memory: "8Gi"
+    requests:
+      cpu: "500m"
+      memory: "500Mi"
+  # Number of executors per agent
+  containerCap: 2
+
+persistence:
+  enabled: true
+  size: 32Gi
+
+networkPolicy:
+  enabled: true
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name:
+
+rbac:
+  create: true
+# Additional configurations can be added as per your requirements
+# helm install jenkins jenkinsci/jenkins -f values.yaml --namespace jenkins --create-namespace
+# helm upgrade jenkins jenkinsci/jenkins -f values.yaml --namespace jenkins
+# kubectl create secret generic github-secret --from-literal=clientSecret=<your-github-secret> -n jenkins
