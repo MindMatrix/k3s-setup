@@ -1,3 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: cors
+  namespace: default
+spec:
+  headers:
+    accessControlAllowMethods:
+      - "*"
+    accessControlAllowOriginList:
+      - "*"
+    accessControlMaxAge: 100
+    addVaryHeader: true
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -17,5 +30,6 @@ spec:
           port: 4181
       middlewares:
         - name: default-headers
+        - name: cors
   tls:
     secretName: gladeos-net-tls #production
